@@ -24,7 +24,7 @@ app.set("view engine", "ejs");
 // Session setup
 app.use(
   session({
-    secret: process.env.EXPRESS_SECRET,
+    secret: "catizen",
     resave: false,
     saveUninitialized: true,
     cookie: { secure: true }, // Set to true if using HTTPS
