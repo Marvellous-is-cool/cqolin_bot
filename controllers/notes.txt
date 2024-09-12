@@ -1,0 +1,493 @@
+Then this particular web app is launched on telegram as you might have noticed, but i am having issue with firebase, it is using authentication and all i ever want is to get the user's username from telegram when they starts the mini app, and then pass it to firebase for it to check if the user exists already and load their data, and if they do not exist, it needs not to create another id for them, until when they decide to save their details to the cloud after their payment of 5 stars on telegram... is there a way to do this.... you can check out the telegram web app api?
+
+
+firebaseController.js: // Import Firebase modules in a modular way
+const { initializeApp } = require("firebase/app");
+const {
+  getFirestore,
+  collection,
+  doc,
+  getDocs,
+  getDoc,
+  addDoc,
+  setDoc,
+} = require("firebase/firestore");
+const {
+  getAuth,
+  signInWithCustomToken,
+  onAuthStateChanged,
+} = require("firebase/auth");
+const adminAuth = require("./admin"); // Import the Firebase Admin SDK setup
+
+// Firebase configuration
+const firebaseConfig = {
+  apiKey: process.env.FIREBASE_API_KEY,
+  authDomain: process.env.FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.FIREBASE_PROJECT_ID,
+  storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.FIREBASE_APP_ID,
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+// Authenticate or create a user based on Telegram username
+exports.authenticateOrCreateUser = async (username) => {
+  try {
+    const userDoc = await getUserByUsername(username);
+
+    if (userDoc) {
+      // User exists, authenticate them
+      const token = await generateCustomToken(userDoc.uid); // Generate a custom token
+      await signInWithCustomToken(auth, token);
+      return userDoc.uid;
+    } else {
+      // User does not exist, create a new user
+      const newUser = await createNewUser(username);
+      return newUser.uid;
+    }
+  } catch (error) {
+    console.error("Error authenticating or creating user: ", error);
+    throw new Error("Authentication failed");
+  }
+};
+
+// Create a new user document
+const createNewUser = async (username) => {
+  try {
+    const usersCollection = collection(db, "users");
+    const newUserRef = doc(usersCollection);
+    await setDoc(newUserRef, { username });
+    return { uid: newUserRef.id };
+  } catch (error) {
+    console.error("Error creating new user: ", error);
+    throw new Error("Error creating new user");
+  }
+};
+
+// Get user by Telegram username
+const getUserByUsername = async (username) => {
+  try {
+    const usersCollection = collection(db, "users");
+    const querySnapshot = await getDocs(usersCollection);
+    let userDoc = null;
+
+    querySnapshot.forEach((doc) => {
+      if (doc.data().username === username) {
+        userDoc = { ...doc.data(), uid: doc.id };
+      }
+    });
+
+    if (userDoc) {
+      return userDoc;
+    } else {
+      return null;
+    }
+  } catch (error) {
+    console.error("Error getting user by username: ", error);
+    return null;
+  }
+};
+
+// Generate a custom token for the user
+const generateCustomToken = async (uid) => {
+  try {
+    const token = await adminAuth.createCustomToken(uid);
+    return token;
+  } catch (error) {
+    console.error("Error generating custom token: ", error);
+    throw new Error("Error generating custom token");
+  }
+};
+
+// Get links by current user
+exports.getLinksByCurrentUser = async () => {
+  try {
+    const userId = await getCurrentUserId();
+    const linksCollection = collection(db, "users", userId, "links");
+    const querySnapshot = await getDocs(linksCollection);
+    const links = [];
+    querySnapshot.forEach((doc) => {
+      links.push(doc.data());
+    });
+    return links;
+  } catch (error) {
+    console.error("Error getting links: ", error);
+    return [];
+  }
+};
+
+// Get user profile data
+exports.getUserProfile = async () => {
+  try {
+    const userId = await getCurrentUserId();
+    const userDoc = doc(db, "users", userId);
+    const docSnap = await getDoc(userDoc);
+    if (docSnap.exists()) {
+      return docSnap.data();
+    } else {
+      return null;
+    }
+  } catch (error) {
+    console.error("Error getting user profile: ", error);
+    return null;
+  }
+};
+
+// Save link to cloud
+exports.saveToCloud = async (req, res, linkData) => {
+  try {
+    const userId = await getCurrentUserId();
+    const linksCollection = collection(db, "users", userId, "links");
+    await addDoc(linksCollection, linkData);
+    res.redirect(`/home`);
+  } catch (error) {
+    console.error("Error saving to cloud: ", error);
+    res.render("create", { message: "Error saving link to cloud" });
+  }
+};
+
+// Get the current authenticated user's UID
+const getCurrentUserId = () => {
+  return new Promise((resolve, reject) => {
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        resolve(user.uid);
+      } else {
+        reject(new Error("User not authenticated"));
+      }
+    });
+  });
+};
+
+
+app.js: const express = require("express");
+const bodyParser = require("body-parser");
+const path = require("path");
+require("dotenv").config();
+const TelegramBot = require("node-telegram-bot-api");
+
+const homeController = require("./controllers/homeController");
+const createController = require("./controllers/createController");
+const aboutController = require("./controllers/aboutController");
+const updatesController = require("./controllers/updatesController");
+const profileController = require("./controllers/profileController");
+const {
+  authenticateOrCreateUser,
+} = require("./controllers/firebaseController");
+
+const app = express();
+
+// Middleware
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(express.static(path.join(__dirname, "public")));
+app.set("view engine", "ejs");
+
+// Routes
+app.get("/", homeController.renderWelcomePage);
+app.get("/home", homeController.renderHomePage);
+app.get("/create", createController.renderCreatePage);
+app.post("/create", createController.createLink);
+app.get("/about", aboutController.renderAboutPage);
+app.get("/updates", updatesController.renderUpdatesPage);
+app.get("/profile", profileController.renderProfilePage);
+
+// Firebase Routes
+app.post("/importFromCloud", createController.importFromCloud);
+
+// Telegram Bot Setup
+const token = process.env.TELEGRAM_BOT_TOKEN; // Store your bot token in .env file
+const bot = new TelegramBot(token);
+
+// Set up webhook URL (make sure your app is hosted somewhere with HTTPS, e.g., Render or Heroku)
+const webhookUrl = `${process.env.WEBHOOK_URL}/bot${token}`;
+
+// Set webhook for your bot
+bot.setWebHook(webhookUrl);
+
+// Webhook endpoint for Telegram updates
+app.post(`/bot${token}`, (req, res) => {
+  bot.processUpdate(req.body);
+  res.sendStatus(200);
+});
+
+// Handle Telegram '/start' command
+bot.onText(/\/start/, async (msg) => {
+  const chatId = msg.chat.id;
+  const username = msg.from.username; // Retrieve the Telegram username
+
+  try {
+    // Authenticate or create user based on Telegram username
+    const userId = await authenticateOrCreateUser(username);
+
+    // Send a welcome message
+    await bot.sendMessage(
+      chatId,
+      "Welcome to Cqolin! Manage your links easily."
+    );
+    await bot.sendMessage(
+      chatId,
+      "Click the button below to start managing your links.",
+      {
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: "Start Managing Links", callback_data: "start_app" }],
+          ],
+        },
+      }
+    );
+  } catch (error) {
+    await bot.sendMessage(
+      chatId,
+      "There was an error authenticating you. Please try again later."
+    );
+  }
+});
+
+// Handle Telegram button click
+bot.on("callback_query", (callbackQuery) => {
+  const chatId = callbackQuery.message.chat.id;
+  const action = callbackQuery.data;
+
+  if (action === "start_app") {
+    bot.sendMessage(chatId, "Opening the app...");
+
+    // Provide the URL of your hosted app (on Render, for example)
+    bot.sendMessage(
+      chatId,
+      "Access the app at: https://t.me/cqolin_bot/cqolin"
+    );
+  }
+});
+
+// Start the server
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server is running on https://t.me/cqolin_bot/cqolin:${PORT}`);
+});
+
+
+views/create.ejs: <!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Create New Link</title>
+    <link rel="stylesheet" href="/css/styles.css" />
+    <style>
+      /* Animations */
+      @keyframes fadeIn {
+        0% {
+          opacity: 0;
+          transform: translateY(-20px);
+        }
+        100% {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      @keyframes slideIn {
+        0% {
+          opacity: 0;
+          transform: translateX(-100px);
+        }
+        100% {
+          opacity: 1;
+          transform: translateX(0);
+        }
+      }
+      .create-container {
+        color: white;
+        text-align: center;
+        padding: 50px;
+        animation: fadeIn 1.5s ease;
+      }
+      .options-container {
+        display: flex;
+        justify-content: center;
+        gap: 20px;
+        margin-bottom: 30px;
+      }
+      .options-container button {
+        padding: 10px 20px;
+        background-color: #1e90ff;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        font-size: 18px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        animation: slideIn 1s ease;
+      }
+      .options-container button:hover {
+        background-color: #00bfff;
+        transform: scale(1.1);
+      }
+
+      #importForm,
+      #createForm {
+        display: none;
+        margin-top: 30px;
+        animation: fadeIn 1.5s ease;
+      }
+      form input,
+      form select {
+        display: block;
+        width: 80%;
+        margin: 10px auto;
+        padding: 10px;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+        transition: all 0.3s ease;
+        font-size: 16px;
+      }
+      form input:focus,
+      form select:focus {
+        border-color: #1e90ff;
+        box-shadow: 0 0 8px rgba(30, 144, 255, 0.7);
+      }
+
+      form button {
+        padding: 10px 20px;
+        background-color: #1e90ff;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        font-size: 18px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+      form button:hover {
+        background-color: #00bfff;
+        transform: scale(1.1);
+      }
+
+      /* Stylish Text Animations */
+      .stylish-text {
+        font-size: 22px;
+        color: #00bfff;
+        margin-bottom: 20px;
+        animation: fadeIn 2s ease;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="create-container">
+      <h1>Create a New Link</h1>
+
+      <div class="options-container">
+        <button onclick="showImport()">Import From Cloud</button>
+        <button onclick="showCreateForm()">Create From Scratch</button>
+      </div>
+
+      <!-- Form for Importing Links from Cloud -->
+      <div id="importForm">
+        <h2>Import Your Links from Cloud</h2>
+        <form action="/importFromCloud" method="POST">
+          <input
+            type="text"
+            name="username"
+            placeholder="Enter your username"
+            required
+          />
+          <button type="submit">Import Links</button>
+        </form>
+      </div>
+
+      <!-- Form for Creating Links from Scratch -->
+      <div id="createForm">
+        <div class="stylish-text">Enter a name for this link</div>
+        <form action="/create" method="POST">
+          <input
+            type="text"
+            id="name"
+            name="name"
+            placeholder="Link Name"
+            required
+          />
+
+          <div class="stylish-text">Paste the link</div>
+          <input
+            type="url"
+            id="link"
+            name="link"
+            placeholder="Link URL"
+            required
+          />
+
+          <div class="stylish-text">
+            Select or choose a category for this link
+          </div>
+          <input
+            type="text"
+            id="category"
+            name="category"
+            placeholder="Category"
+            required
+          />
+
+          <div id="categorySearchResults"></div>
+
+          <label class="stylish-text">Save Option:</label>
+          <select name="saveOption">
+            <option value="local">Save Locally</option>
+            <option value="cloud">Save to Cloud (5 stars required)</option>
+          </select>
+
+          <button type="submit">Add Link</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <%- include('partials/nav') %>
+
+    <script>
+      function showImport() {
+        document.getElementById("importForm").style.display = "block";
+        document.getElementById("createForm").style.display = "none";
+      }
+
+      function showCreateForm() {
+        document.getElementById("createForm").style.display = "block";
+        document.getElementById("importForm").style.display = "none";
+      }
+    </script>
+  </body>
+</html>
+
+
+createController.js: const firebaseController = require("./firebaseController");
+
+// Render Create Page
+exports.renderCreatePage = (req, res) => {
+  res.render("create");
+};
+
+// Create a link (Save locally or to cloud)
+exports.createLink = (req, res) => {
+  const { name, link, category, saveOption } = req.body;
+
+  if (saveOption === "cloud") {
+    firebaseController.saveToCloud(req, res, { name, link, category });
+  } else {
+    // Save locally to user's localStorage (handled on client-side)
+    res.redirect("/home");
+  }
+};
+
+// Import from Cloud
+exports.importFromCloud = (req, res) => {
+  const { username } = req.body;
+  firebaseController.importFromCloud(username).then((data) => {
+    if (data) {
+      res.redirect("/home");
+    } else {
+      res.render("create", { message: "No data found in cloud." });
+    }
+  });
+};
+ssssssssss

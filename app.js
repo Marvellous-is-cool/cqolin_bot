@@ -54,14 +54,23 @@ bot.onText(/\/start/, async (msg) => {
   const username = msg.from.username; // Retrieve the Telegram username
 
   try {
-    // Authenticate or create user based on Telegram username
-    const userId = await authenticateOrCreateUser(username);
+    // Check if user data exists by username without authentication
+    const userDoc = await checkUserExistsByUsername(username);
 
-    // Send a welcome message
-    await bot.sendMessage(
-      chatId,
-      "Welcome to Cqolin! Manage your links easily."
-    );
+    if (userDoc) {
+      // User exists, proceed normally
+      await bot.sendMessage(
+        chatId,
+        "Welcome back to Cqolin! Your data has been loaded."
+      );
+    } else {
+      // User does not exist, inform them of the next steps
+      await bot.sendMessage(
+        chatId,
+        "Welcome to Cqolin! You can start managing your links."
+      );
+    }
+
     await bot.sendMessage(
       chatId,
       "Click the button below to start managing your links.",
@@ -76,7 +85,7 @@ bot.onText(/\/start/, async (msg) => {
   } catch (error) {
     await bot.sendMessage(
       chatId,
-      "There was an error authenticating you. Please try again later."
+      "There was an error loading your data. Please try again later."
     );
   }
 });

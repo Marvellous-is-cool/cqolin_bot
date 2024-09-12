@@ -1,4 +1,4 @@
-// Import Firebase modules in a modular way
+// Import Firebase modules
 const { initializeApp } = require("firebase/app");
 const {
   getFirestore,
@@ -6,15 +6,8 @@ const {
   doc,
   getDocs,
   getDoc,
-  addDoc,
   setDoc,
 } = require("firebase/firestore");
-const {
-  getAuth,
-  signInWithCustomToken,
-  onAuthStateChanged,
-} = require("firebase/auth");
-const adminAuth = require("./admin"); // Import the Firebase Admin SDK setup
 
 // Firebase configuration
 const firebaseConfig = {
@@ -29,44 +22,9 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-const auth = getAuth(app);
 
-// Authenticate or create a user based on Telegram username
-exports.authenticateOrCreateUser = async (username) => {
-  try {
-    const userDoc = await getUserByUsername(username);
-
-    if (userDoc) {
-      // User exists, authenticate them
-      const token = await generateCustomToken(userDoc.uid); // Generate a custom token
-      await signInWithCustomToken(auth, token);
-      return userDoc.uid;
-    } else {
-      // User does not exist, create a new user
-      const newUser = await createNewUser(username);
-      return newUser.uid;
-    }
-  } catch (error) {
-    console.error("Error authenticating or creating user: ", error);
-    throw new Error("Authentication failed");
-  }
-};
-
-// Create a new user document
-const createNewUser = async (username) => {
-  try {
-    const usersCollection = collection(db, "users");
-    const newUserRef = doc(usersCollection);
-    await setDoc(newUserRef, { username });
-    return { uid: newUserRef.id };
-  } catch (error) {
-    console.error("Error creating new user: ", error);
-    throw new Error("Error creating new user");
-  }
-};
-
-// Get user by Telegram username
-const getUserByUsername = async (username) => {
+// Check if user exists by username without authentication
+exports.checkUserExistsByUsername = async (username) => {
   try {
     const usersCollection = collection(db, "users");
     const querySnapshot = await getDocs(usersCollection);
@@ -78,84 +36,47 @@ const getUserByUsername = async (username) => {
       }
     });
 
-    if (userDoc) {
-      return userDoc;
-    } else {
-      return null;
-    }
+    return userDoc || null;
   } catch (error) {
-    console.error("Error getting user by username: ", error);
+    console.error("Error checking user by username: ", error);
     return null;
   }
 };
 
-// Generate a custom token for the user
-const generateCustomToken = async (uid) => {
+// Save new user data to the cloud
+exports.saveNewUserToCloud = async (username, linkData) => {
   try {
-    const token = await adminAuth.createCustomToken(uid);
-    return token;
+    const usersCollection = collection(db, "users");
+    const newUserRef = doc(usersCollection);
+    await setDoc(newUserRef, { username, links: [linkData] });
+    return newUserRef.id;
   } catch (error) {
-    console.error("Error generating custom token: ", error);
-    throw new Error("Error generating custom token");
+    console.error("Error saving new user to cloud: ", error);
+    throw new Error("Error saving new user");
   }
 };
 
-// Get links by current user
-exports.getLinksByCurrentUser = async () => {
-  try {
-    const userId = await getCurrentUserId();
-    const linksCollection = collection(db, "users", userId, "links");
-    const querySnapshot = await getDocs(linksCollection);
-    const links = [];
-    querySnapshot.forEach((doc) => {
-      links.push(doc.data());
-    });
-    return links;
-  } catch (error) {
-    console.error("Error getting links: ", error);
-    return [];
-  }
+// Get user links
+exports.getLinksByUsername = async (username) => {
+  const userDoc = await this.checkUserExistsByUsername(username);
+  return userDoc ? userDoc.links : [];
 };
 
-// Get user profile data
-exports.getUserProfile = async () => {
+// Save link to the cloud under existing user
+exports.saveLinkToCloud = async (userId, linkData) => {
   try {
-    const userId = await getCurrentUserId();
-    const userDoc = doc(db, "users", userId);
-    const docSnap = await getDoc(userDoc);
-    if (docSnap.exists()) {
-      return docSnap.data();
+    const userRef = doc(db, "users", userId);
+    const userSnap = await getDoc(userRef);
+
+    if (userSnap.exists()) {
+      const userLinks = userSnap.data().links || [];
+      userLinks.push(linkData);
+      await setDoc(userRef, { links: userLinks }, { merge: true });
     } else {
-      return null;
+      throw new Error("User not found");
     }
   } catch (error) {
-    console.error("Error getting user profile: ", error);
-    return null;
+    console.error("Error saving link to cloud: ", error);
+    throw new Error("Error saving link to cloud");
   }
-};
-
-// Save link to cloud
-exports.saveToCloud = async (req, res, linkData) => {
-  try {
-    const userId = await getCurrentUserId();
-    const linksCollection = collection(db, "users", userId, "links");
-    await addDoc(linksCollection, linkData);
-    res.redirect(`/home`);
-  } catch (error) {
-    console.error("Error saving to cloud: ", error);
-    res.render("create", { message: "Error saving link to cloud" });
-  }
-};
-
-// Get the current authenticated user's UID
-const getCurrentUserId = () => {
-  return new Promise((resolve, reject) => {
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        resolve(user.uid);
-      } else {
-        reject(new Error("User not authenticated"));
-      }
-    });
-  });
 };
