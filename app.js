@@ -31,28 +31,35 @@ app.post("/importFromCloud", createController.importFromCloud);
 
 // Telegram Bot Setup
 const token = process.env.TELEGRAM_BOT_TOKEN; // Store your bot token in .env file
-const bot = new TelegramBot(token, { polling: true });
+const bot = new TelegramBot(token);
+
+// Set up webhook URL (make sure your app is hosted somewhere with HTTPS, e.g., Render or Heroku)
+const webhookUrl = `${process.env.WEBHOOK_URL}/bot${token}`;
+
+// Set webhook for your bot
+bot.setWebHook(webhookUrl);
+
+// Webhook endpoint for Telegram updates
+app.post(`/bot${token}`, (req, res) => {
+  bot.processUpdate(req.body);
+  res.sendStatus(200);
+});
 
 // Handle Telegram '/start' command
 bot.onText(/\/start/, (msg) => {
   const chatId = msg.chat.id;
-
-  // Initial message for the user
   bot.sendMessage(chatId, "Welcome to Cqolin! Manage your links easily.");
-
-  // Message with the 'Open' button to access the mini app
-  bot.sendMessage(chatId, "Click the button below to open the app.", {
-    reply_markup: {
-      inline_keyboard: [
-        [
-          {
-            text: "Open", // The button label
-            url: "https://cqolin-bot.onrender.com", // The URL to your hosted mini app (replace with your actual URL)
-          },
+  bot.sendMessage(
+    chatId,
+    "Click the button below to start managing your links.",
+    {
+      reply_markup: {
+        inline_keyboard: [
+          [{ text: "Start Managing Links", callback_data: "start_app" }],
         ],
-      ],
-    },
-  });
+      },
+    }
+  );
 });
 
 // Handle Telegram button click
@@ -61,10 +68,9 @@ bot.on("callback_query", (callbackQuery) => {
   const action = callbackQuery.data;
 
   if (action === "start_app") {
-    // Here you can provide any additional logic if needed when the button is clicked
     bot.sendMessage(chatId, "Opening the app...");
 
-    // Optionally send a direct message with the app link (if you want to do so)
+    // Provide the URL of your hosted app (on Render, for example)
     bot.sendMessage(
       chatId,
       "Access the app at: https://cqolin-bot.onrender.com"
