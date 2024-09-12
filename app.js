@@ -9,6 +9,9 @@ const createController = require("./controllers/createController");
 const aboutController = require("./controllers/aboutController");
 const updatesController = require("./controllers/updatesController");
 const profileController = require("./controllers/profileController");
+const {
+  authenticateOrCreateUser,
+} = require("./controllers/firebaseController");
 
 const app = express();
 
@@ -46,20 +49,36 @@ app.post(`/bot${token}`, (req, res) => {
 });
 
 // Handle Telegram '/start' command
-bot.onText(/\/start/, (msg) => {
+bot.onText(/\/start/, async (msg) => {
   const chatId = msg.chat.id;
-  bot.sendMessage(chatId, "Welcome to Cqolin! Manage your links easily.");
-  bot.sendMessage(
-    chatId,
-    "Click the button below to start managing your links.",
-    {
-      reply_markup: {
-        inline_keyboard: [
-          [{ text: "Start Managing Links", callback_data: "start_app" }],
-        ],
-      },
-    }
-  );
+  const username = msg.from.username; // Retrieve the Telegram username
+
+  try {
+    // Authenticate or create user based on Telegram username
+    const userId = await authenticateOrCreateUser(username);
+
+    // Send a welcome message
+    await bot.sendMessage(
+      chatId,
+      "Welcome to Cqolin! Manage your links easily."
+    );
+    await bot.sendMessage(
+      chatId,
+      "Click the button below to start managing your links.",
+      {
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: "Start Managing Links", callback_data: "start_app" }],
+          ],
+        },
+      }
+    );
+  } catch (error) {
+    await bot.sendMessage(
+      chatId,
+      "There was an error authenticating you. Please try again later."
+    );
+  }
 });
 
 // Handle Telegram button click
@@ -73,7 +92,7 @@ bot.on("callback_query", (callbackQuery) => {
     // Provide the URL of your hosted app (on Render, for example)
     bot.sendMessage(
       chatId,
-      "Access the app at: https://cqolin-bot.onrender.com"
+      "Access the app at: https://t.me/cqolin_bot/cqolin"
     );
   }
 });
@@ -81,5 +100,5 @@ bot.on("callback_query", (callbackQuery) => {
 // Start the server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`Server is running on https://cqolin-bot.onrender.com:${PORT}`);
+  console.log(`Server is running on https://t.me/cqolin_bot/cqolin:${PORT}`);
 });
