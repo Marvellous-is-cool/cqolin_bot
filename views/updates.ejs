@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Updates - Cqolin</title>
+    <link rel="stylesheet" href="/css/styles.css" />
+    <style>
+      .updates-container {
+        color: white;
+        text-align: center;
+        padding: 50px;
+        background-color: black;
+        min-height: 100vh;
+      }
+      .updates-list {
+        list-style: none;
+        padding: 0;
+      }
+      .updates-list li {
+        background-color: #1e1e1e;
+        border-radius: 8px;
+        margin: 10px auto;
+        padding: 15px;
+        width: 80%;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        animation: fadeIn 2s ease;
+      }
+      .updates-list li h2 {
+        font-size: 18px;
+        margin-bottom: 10px;
+      }
+      .updates-list li p {
+        font-size: 16px;
+      }
+      .back-button {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        background-color: #1e90ff;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        padding: 10px 15px;
+        font-size: 20px;
+        cursor: pointer;
+        transition: background-color 0.3s ease, transform 0.3s ease;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      }
+      .back-button:hover {
+        background-color: #00bfff;
+        transform: scale(1.1);
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(-20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <button class="back-button" onclick="window.location.href='/home';">
+      &#9664;
+    </button>
+    <div class="updates-container">
+      <h1>Updates</h1>
+      <ul class="updates-list">
+        <li>
+          <h2>New Feature: Improved Link Management</h2>
+          <p>
+            We have enhanced the link management system with better organization
+            and categorization features.
+          </p>
+        </li>
+        <li>
+          <h2>Bug Fix: Link Thumbnail Issue</h2>
+          <p>Fixed the issue with link thumbnails not displaying correctly.</p>
+        </li>
+        <!-- Add more updates as needed -->
+      </ul>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>About - Cqolin</title>
+    <link rel="stylesheet" href="/css/styles.css" />
+    <style>
+      .about-container {
+        color: white;
+        text-align: center;
+        padding: 50px;
+        background-color: black;
+        min-height: 100vh;
+      }
+      .about-description {
+        margin-bottom: 20px;
+        font-size: 20px;
+        animation: fadeIn 2s ease;
+      }
+      .social-links {
+        margin: 20px 0;
+      }
+      .social-links a {
+        color: #1e90ff;
+        text-decoration: none;
+        margin: 0 10px;
+        font-size: 18px;
+        transition: color 0.3s ease;
+      }
+      .social-links a:hover {
+        color: #00bfff;
+      }
+      .version {
+        margin-top: 30px;
+        font-size: 16px;
+        color: #888;
+      }
+      .back-button {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        background-color: #1e90ff;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        padding: 10px 15px;
+        font-size: 20px;
+        cursor: pointer;
+        transition: background-color 0.3s ease, transform 0.3s ease;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      }
+      .back-button:hover {
+        background-color: #00bfff;
+        transform: scale(1.1);
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(-20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <button class="back-button" onclick="window.location.href='/home';">
+      &#9664;
+    </button>
+    <div class="about-container">
+      <h1>About Cqolin</h1>
+      <p class="about-description">
+        Cqolin is a stylish and modern Telegram mini app developed by CoolBuoy.
+        It was created during a night of frustration to make link management
+        easier and more organized.
+      </p>
+      <div class="social-links">
+        <a href="https://x.com/coolbuoy" target="_blank">X</a>
+        <a href="https://tiktok.com/@coolbuoy" target="_blank">TikTok</a>
+        <a href="https://instagram.com/coolbuoy" target="_blank">Instagram</a>
+        <a href="https://github.com/coolbuoy" target="_blank">GitHub</a>
+      </div>
+      <div class="version">
+        <p>Version 1.0.0</p>
+      </div>
+    </div>
+  </body>
+</html>

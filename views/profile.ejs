@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Profile - Manage Links</title>
+    <link rel="stylesheet" href="/css/styles.css" />
+    <style>
+      .profile-container {
+        color: white;
+        text-align: center;
+        padding: 50px;
+        background-color: black;
+        min-height: 100vh;
+      }
+      .profile-header {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      .profile-header img {
+        border-radius: 50%;
+        width: 150px;
+        height: 150px;
+        object-fit: cover;
+        margin-bottom: 20px;
+      }
+      .profile-header h1 {
+        font-size: 24px;
+        margin: 10px 0;
+      }
+      .profile-stats {
+        margin-top: 30px;
+        font-size: 18px;
+      }
+      .bottom-nav {
+        position: fixed;
+        bottom: 0;
+        width: 100%;
+        background-color: #1e1e1e;
+        display: flex;
+        justify-content: space-around;
+        padding: 10px;
+        box-shadow: 0 -4px 8px rgba(0, 0, 0, 0.2);
+      }
+      .bottom-nav a {
+        color: white;
+        text-decoration: none;
+        font-size: 16px;
+      }
+      .bottom-nav a:hover {
+        color: #00bfff;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="profile-container">
+      <div class="profile-header">
+        <img src="<%= profilePic %>" alt="Profile Picture" />
+        <h1>@<%= username %></h1>
+        <div class="profile-stats">
+          <p>Total Links: <%= totalLinks %></p>
+          <p>Total Categories: <%= totalCategories %></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <%- include('partials/nav') %>
+  </body>
+</html>

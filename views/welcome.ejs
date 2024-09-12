@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Welcome to Cqolin</title>
+    <link rel="stylesheet" href="/css/styles.css" />
+  </head>
+  <body>
+    <div class="welcome-container">
+      <h1 class="animate">Cqolin</h1>
+      <p class="subtext animate">Manage links easily</p>
+      <button id="coolButton" onclick="followCreator()">Cool</button>
+    </div>
+
+    <script>
+      // Simulate follow creator task
+      function followCreator() {
+        window.localStorage.setItem("firstTime", "false");
+        window.location.href = "/home";
+      }
+    </script>
+  </body>
+</html>
