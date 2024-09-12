@@ -47,7 +47,7 @@ bot.onText(/\/start/, (msg) => {
         [
           {
             text: "Open", // The button label
-            url: "http://localhost:3000", // The URL to your hosted mini app (replace with your actual URL)
+            url: "https://cqolin-bot.onrender.com", // The URL to your hosted mini app (replace with your actual URL)
           },
         ],
       ],
@@ -65,12 +65,15 @@ bot.on("callback_query", (callbackQuery) => {
     bot.sendMessage(chatId, "Opening the app...");
 
     // Optionally send a direct message with the app link (if you want to do so)
-    bot.sendMessage(chatId, "Access the app at: http://localhost:3000");
+    bot.sendMessage(
+      chatId,
+      "Access the app at: https://cqolin-bot.onrender.com"
+    );
   }
 });
 
 // Start the server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
+  console.log(`Server is running on https://cqolin-bot.onrender.com:${PORT}`);
 });
