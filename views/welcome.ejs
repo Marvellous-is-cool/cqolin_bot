@@ -48,10 +48,13 @@
         display: none;
         margin-top: 20px;
         padding: 20px;
+        animation: fadeIn 1s ease-in-out;
+      }
+
+      .tasks {
         border: 2px solid white;
         border-radius: 10px;
         background-color: #222;
-        animation: fadeIn 1s ease-in-out;
       }
 
       @keyframes fadeIn {
@@ -91,17 +94,21 @@
   </head>
   <body>
     <div class="welcome-container">
-      <h1 class="animate" id="botName">Cqolin</h1>
-      <p class="subtext animate" id="tagline">Manage links easily</p>
-      <button id="coolButton" onclick="showTaskSection()">Cool</button>
+      <section id="welcome1">
+        <h1 class="animate" id="botName">Cqolin</h1>
+        <p class="subtext animate" id="tagline">Manage links easily</p>
+        <button id="coolButton" onclick="showTaskSection()">Cool</button>
+      </section>
 
       <!-- Task Section -->
       <div id="taskSection">
         <h2>Task</h2>
-        <p>Kindly follow the Creator's X account before accessing the app.</p>
-        <button id="followButton" onclick="followCreator()">Follow</button>
-        <button id="verifyButton" onclick="verifyFollow()">Verify</button>
-        <div class="loading" id="loadingSpinner"></div>
+        <div class="tasks">
+          <p>Kindly follow the Creator's X account before accessing the app.</p>
+          <button id="followButton" onclick="followCreator()">Follow</button>
+          <button id="verifyButton" onclick="verifyFollow()">Verify</button>
+          <div class="loading" id="loadingSpinner"></div>
+        </div>
       </div>
     </div>
 
@@ -116,7 +123,7 @@
       // Show the task section
       function showTaskSection() {
         document.getElementById("taskSection").style.display = "block";
-        document.getElementById("coolButton").style.display = "none";
+        document.getElementById("welcome1").style.display = "none";
         document.getElementById("followButton").style.display = "inline-block";
       }
 
