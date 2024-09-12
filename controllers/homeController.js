@@ -1,5 +1,9 @@
 const firebaseController = require("./firebaseController");
 
+exports.renderWelcomePage = (req, res) => {
+  res.render("welcome");
+};
+
 // Render Home Page with Firebase and LocalStorage
 exports.renderHomePage = (req, res) => {
   const username = req.session.username; // Access username from session
