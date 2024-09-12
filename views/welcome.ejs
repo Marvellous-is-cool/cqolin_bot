@@ -52,9 +52,16 @@
       }
 
       .tasks {
+        margin: 2em;
         border: 2px solid white;
         border-radius: 10px;
         background-color: #222;
+        display: flex;
+        flex-direction: row;
+        align-items: stretch;
+        justify-content: space-around;
+        align-content: space-around;
+        justify-items: stretch;
       }
 
       @keyframes fadeIn {
@@ -103,8 +110,9 @@
       <!-- Task Section -->
       <div id="taskSection">
         <h2>Task</h2>
+        <p>Kindly follow the Creator's X account before accessing the app.</p>
         <div class="tasks">
-          <p>Kindly follow the Creator's X account before accessing the app.</p>
+          <p>Follow the Creator's X account</p>
           <button id="followButton" onclick="followCreator()">Follow</button>
           <button id="verifyButton" onclick="verifyFollow()">Verify</button>
           <div class="loading" id="loadingSpinner"></div>
@@ -129,7 +137,7 @@
 
       // Follow button redirects to X account
       function followCreator() {
-        window.open("https://twitter.com/creator_x_account", "_blank"); // Replace with the actual X account URL
+        window.open("https://twitter.com/olamitibo", "_blank"); // Replace with the actual X account URL
         document.getElementById("followButton").style.display = "none";
         document.getElementById("verifyButton").style.display = "inline-block";
       }
