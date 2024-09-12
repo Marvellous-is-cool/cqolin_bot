@@ -38,8 +38,14 @@ exports.createLink = async (req, res) => {
       res.render("create", { message: "Error saving link to cloud" });
     }
   } else {
-    // Save locally to user's localStorage (handled on client-side)
-    res.redirect("/home");
+    // If save option is "local", pass the data to the client-side script
+    res.render("create", {
+      name,
+      link,
+      category,
+      saveLocally: true, // Flag to indicate local storage should be used
+      username, // Pass username as well
+    });
   }
 };
 

@@ -5,70 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Home - Manage Links</title>
     <link rel="stylesheet" href="/css/styles.css" />
-    <style>
-      .home-container {
-        color: white;
-        text-align: center;
-        padding: 50px;
-        background-color: black;
-        min-height: 100vh;
-      }
-      .link-box {
-        background-color: #1e1e1e;
-        color: white;
-        border-radius: 10px;
-        padding: 15px;
-        margin: 15px;
-        display: inline-block;
-        width: 250px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        transition: transform 0.3s ease;
-      }
-      .link-box:hover {
-        transform: scale(1.05);
-      }
-      .link-box img {
-        width: 100%;
-        height: 150px;
-        border-radius: 8px;
-        object-fit: cover;
-      }
-      .link-box p {
-        font-size: 18px;
-        margin: 10px 0;
-      }
-      .link-box a {
-        text-decoration: none;
-        background-color: #1e90ff;
-        padding: 10px 15px;
-        color: white;
-        border-radius: 5px;
-        font-size: 16px;
-        display: inline-block;
-        transition: background-color 0.3s ease;
-      }
-      .link-box a:hover {
-        background-color: #00bfff;
-      }
-      .bottom-nav {
-        position: fixed;
-        bottom: 0;
-        width: 100%;
-        background-color: #1e1e1e;
-        display: flex;
-        justify-content: space-around;
-        padding: 10px;
-        box-shadow: 0 -4px 8px rgba(0, 0, 0, 0.2);
-      }
-      .bottom-nav a {
-        color: white;
-        text-decoration: none;
-        font-size: 16px;
-      }
-      .bottom-nav a:hover {
-        color: #00bfff;
-      }
-    </style>
+    <link rel="stylesheet" href="/css/home.css" />
   </head>
   <body>
     <div class="home-container">
@@ -84,12 +21,60 @@
           <a href="<%= link.url %>" target="_blank">Go to Link</a>
         </div>
         <% }) %> <% } else { %>
-        <p>No links available. Create new ones!</p>
+        <!-- If no links are found in Firebase, show message and load from LocalStorage -->
+        <p>Loading your links from LocalStorage...</p>
         <% } %>
       </div>
     </div>
 
     <!-- Bottom Navigation -->
     <%- include('partials/nav') %>
+
+    <script>
+      // Only fetch from LocalStorage if no links were found in Firebase
+      const firebaseLinks = <%= JSON.stringify(links) %>;
+
+      function renderLinks(links) {
+        const linksContainer = document.getElementById("links");
+        linksContainer.innerHTML = ''; // Clear the content before adding new links
+        links.forEach(link => {
+          const linkBox = document.createElement("div");
+          linkBox.className = "link-box";
+          linkBox.innerHTML = `
+            <img src="${link.thumbnail || '/path/to/default-thumbnail.png'}" alt="Link Thumbnail" />
+            <p>${link.name}</p>
+            <a href="${link.url}" target="_blank">Go to Link</a>
+          `;
+          linksContainer.appendChild(linkBox);
+        });
+      }
+
+      // Check LocalStorage if Firebase returned no links
+      if (firebaseLinks.length === 0) {
+        const localStorageLinks = JSON.parse(localStorage.getItem('userLinks')) || [];
+
+        // Render LocalStorage links
+        if (localStorageLinks.length > 0) {
+          renderLinks(localStorageLinks);
+        } else {
+          document.getElementById("links").innerHTML = "<p>No links found in LocalStorage either.</p>";
+        }
+      } else {
+        // Optionally: Merge Firebase and LocalStorage links
+        const localStorageLinks = JSON.parse(localStorage.getItem('userLinks')) || [];
+        const combinedLinks = [...firebaseLinks, ...localStorageLinks];
+
+        // Ensure no duplicate links (optional, based on URL)
+        const uniqueLinks = combinedLinks.reduce((acc, current) => {
+          const x = acc.find(link => link.url === current.url);
+          if (!x) {
+            acc.push(current);
+          }
+          return acc;
+        }, []);
+
+        renderLinks(uniqueLinks);
+      }
+    </script>
   </body>
 </html>

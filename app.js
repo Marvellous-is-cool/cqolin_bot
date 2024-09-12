@@ -65,8 +65,14 @@ bot.onText(/\/start/, async (msg) => {
   const username = msg.from.username; // Retrieve the Telegram username
 
   try {
+    // Check if session exists, if not create it
+    if (!msg.session) {
+      msg.session = {};
+    }
+
     // Store the username in session
-    req.session.username = username;
+    msg.session.username = username;
+    console.log("User's username:", username);
 
     // Check if user data exists by username without authentication
     const userDoc = await checkUserExistsByUsername(username);
@@ -97,6 +103,7 @@ bot.onText(/\/start/, async (msg) => {
       }
     );
   } catch (error) {
+    console.error("Error handling /start command:", error); // Log the error
     await bot.sendMessage(
       chatId,
       "There was an error loading your data. Please try again later."

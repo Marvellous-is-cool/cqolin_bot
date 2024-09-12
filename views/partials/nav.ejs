@@ -1,29 +1,55 @@
 <div class="bottom-nav">
-  <a href="/home">Home</a>
-  <a href="/create">Create</a>
-  <a href="/about">About</a>
-  <a href="/updates">Updates</a>
-  <a href="/profile">Profile</a>
+  <a href="/home" class="nav-item">Home</a>
+  <a href="/create" class="nav-item">Create</a>
+  <a href="/about" class="nav-item">About</a>
+  <a href="/updates" class="nav-item">Updates</a>
+  <a href="/profile" class="nav-item">Profile</a>
 </div>
 
 <style>
+  /* Base Styles for Bottom Navigation */
   .bottom-nav {
     position: fixed;
     bottom: 0;
     width: 100%;
-    background-color: #1f1d1d;
+    background-color: #000000;
     color: white;
     text-align: center;
     padding: 10px 0;
-    box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.4);
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    z-index: 1000;
   }
-  .bottom-nav a {
+
+  /* Styles for Navigation Links */
+  .bottom-nav .nav-item {
     color: white;
     text-decoration: none;
-    margin: 0 15px;
-    font-size: 18px;
+    font-size: 16px;
+    text-transform: uppercase;
+    font-weight: bold;
+    padding: 8px 15px;
+    border-radius: 5px;
+    transition: background-color 0.3s, color 0.3s;
   }
-  .bottom-nav a:hover {
-    text-decoration: underline;
+
+  .bottom-nav .nav-item:hover,
+  .bottom-nav .nav-item.active {
+    background-color: #1e90ff;
+    color: white;
+  }
+
+  /* Responsive Styles */
+  @media (max-width: 600px) {
+    .bottom-nav {
+      padding: 10px 5px;
+    }
+
+    .bottom-nav .nav-item {
+      font-size: 14px;
+      padding: 5px 10px;
+    }
   }
 </style>
