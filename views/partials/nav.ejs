@@ -3,7 +3,7 @@
   <a href="/create">Create</a>
   <a href="/about">About</a>
   <a href="/updates">Updates</a>
-  <a href="/profile?username=<%= username %>">Profile</a>
+  <a href="/profile?username=<%= req.session.username %>">Profile</a>
 </div>
 
 <style>
