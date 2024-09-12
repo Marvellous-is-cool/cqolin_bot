@@ -8,7 +8,7 @@ exports.renderCreatePage = (req, res) => {
 // Create a link (Save locally or to cloud)
 exports.createLink = async (req, res) => {
   const { name, link, category, saveOption } = req.body;
-  const username = req.body.username; // Assume username is passed or available from session
+  const username = req.session.username; // Assume username is passed or available from session
 
   if (saveOption === "cloud") {
     try {

@@ -33,39 +33,70 @@ async function getTelegramUserProfile(userId) {
   }
 }
 
+// Function to sum details from Firebase and local storage
+async function getUserDetails(username) {
+  let totalLinks = 0;
+  let totalCategories = 0;
+
+  try {
+    // Fetch user details from Firebase
+    const firebaseProfile = await firebaseController.checkUserExistsByUsername(
+      username
+    );
+    if (firebaseProfile) {
+      totalLinks += firebaseProfile.totalLinks || 0;
+      totalCategories += firebaseProfile.totalCategories || 0;
+    }
+  } catch (error) {
+    console.error("Error fetching profile data from Firebase: ", error);
+  }
+
+  try {
+    // Fetch user details from local storage
+    const localStorageData = getLocalStorageData(username);
+    if (localStorageData) {
+      totalLinks += localStorageData.totalLinks || 0;
+      totalCategories += localStorageData.totalCategories || 0;
+    }
+  } catch (error) {
+    console.error("Error fetching profile data from Local Storage: ", error);
+  }
+
+  return { totalLinks, totalCategories };
+}
+
+// Placeholder function for fetching local storage data
+// This function needs to be implemented according to how your local storage is set up
+function getLocalStorageData(username) {
+  // Example structure of local storage data retrieval
+  // Adjust as per the actual implementation of local storage in your application
+  try {
+    // Fetching from a presumed local storage API or direct access if running client-side code
+    const localData = localStorage.getItem(`user_${username}`);
+    return localData ? JSON.parse(localData) : null;
+  } catch (error) {
+    console.error("Error accessing local storage: ", error);
+    return null;
+  }
+}
+
 exports.renderProfilePage = async (req, res) => {
   const userId = req.query.userId; // Get userId from query parameter
 
   // Fetch Telegram profile picture
   const profilePic = await getTelegramUserProfile(userId);
 
-  // Fetch user profile statistics from Firebase or local storage
-  firebaseController
-    .getUserProfile(userId)
-    .then((profileData) => {
-      if (profileData) {
-        res.render("profile", {
-          username: profileData.username,
-          profilePic: profilePic,
-          totalLinks: profileData.totalLinks || 0,
-          totalCategories: profileData.totalCategories || 0,
-        });
-      } else {
-        res.render("profile", {
-          username: profileData.username || "Unknown",
-          profilePic: profilePic,
-          totalLinks: 0,
-          totalCategories: 0,
-        });
-      }
-    })
-    .catch((error) => {
-      console.error("Error fetching profile data from Firebase: ", error);
-      res.render("profile", {
-        username: "Unknown",
-        profilePic: profilePic,
-        totalLinks: 0,
-        totalCategories: 0,
-      });
-    });
+  // Fetch username from session
+  const username = req.session.username || "Unknown";
+
+  // Fetch user details (total links and categories) from Firebase and local storage
+  const { totalLinks, totalCategories } = await getUserDetails(username);
+
+  // Render the profile page with the collected data
+  res.render("profile", {
+    username: username,
+    profilePic: profilePic,
+    totalLinks: totalLinks,
+    totalCategories: totalCategories,
+  });
 };

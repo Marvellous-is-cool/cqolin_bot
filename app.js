@@ -1,6 +1,7 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const path = require("path");
+const session = require("express-session");
 require("dotenv").config();
 const TelegramBot = require("node-telegram-bot-api");
 
@@ -10,7 +11,7 @@ const aboutController = require("./controllers/aboutController");
 const updatesController = require("./controllers/updatesController");
 const profileController = require("./controllers/profileController");
 const {
-  authenticateOrCreateUser,
+  checkUserExistsByUsername,
 } = require("./controllers/firebaseController");
 
 const app = express();
@@ -19,6 +20,16 @@ const app = express();
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "public")));
 app.set("view engine", "ejs");
+
+// Session setup
+app.use(
+  session({
+    secret: process.env.EXPRESS_SECRET,
+    resave: false,
+    saveUninitialized: true,
+    cookie: { secure: true }, // Set to true if using HTTPS
+  })
+);
 
 // Routes
 app.get("/", homeController.renderWelcomePage);
@@ -54,6 +65,9 @@ bot.onText(/\/start/, async (msg) => {
   const username = msg.from.username; // Retrieve the Telegram username
 
   try {
+    // Store the username in session
+    req.session.username = username;
+
     // Check if user data exists by username without authentication
     const userDoc = await checkUserExistsByUsername(username);
 
